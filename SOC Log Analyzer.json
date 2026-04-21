@@ -1,0 +1,269 @@
+{
+  "name": "SOC Log Analyzer",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 1
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        0,
+        0
+      ],
+      "id": "dc75ddd2-2bee-42b8-a0e4-9ff08800f63e",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "fileSelector": "/home/node/.n8n-files/incoming_logs.txt",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1.1,
+      "position": [
+        208,
+        0
+      ],
+      "id": "213818c6-5b79-403e-892b-e522707f0f9e",
+      "name": "Read/Write Files from Disk"
+    },
+    {
+      "parameters": {
+        "jsCode": "const buffer = await this.helpers.getBinaryDataBuffer(0, 'data');\nconst text = buffer.toString('utf8');\n\nreturn [\n  {\n    json: {\n      log_text: text\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        416,
+        0
+      ],
+      "id": "29e5ad6f-dd39-4621-950a-f95b4169391b",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $json.content[0].text;\nconst cleaned = raw.replace(/```json/g, '').replace(/```/g, '').trim();\nconst p = JSON.parse(cleaned);\n\nconst workflowId = `DF-${Date.now()}`;\nconst timestamp = new Date().toISOString();\n\nreturn [{\n  json: {\n    ...p,\n    detection_source: \"n8n SOC Automation\",\n    pipeline_tools: \"Schedule Trigger > File Ingest > Claude AI (Haiku) > Delta Force Parser > Discord\",\n    workflow_id: workflowId,\n    content: `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nDELTA FORCE SOC — INCIDENT REPORT\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nID:           ${workflowId}\nTIMESTAMP:    ${timestamp}\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nSEVERITY:     ${p.threat_level.toUpperCase()} | CONFIDENCE: ${p.confidence}\nATTACK:       ${p.attack_type}\nKILL CHAIN:   ${p.kill_chain_phase}\nESCALATE:     ${p.escalate}\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nSOURCE IP:    ${p.source_ip}\nDEST IP:      ${p.destination_ip}\nPROTOCOL:     ${p.protocol}\nASSET:        ${p.affected_asset}\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nMITRE TACTIC:     ${p.mitre_tactic}\nMITRE TECHNIQUE:  ${p.mitre_technique}\nFALSE POSITIVE:   ${p.false_positive_likelihood}\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nWHAT HAPPENED:\n${p.what_is_happening}\n\nRECOMMENDED ACTION:\n${p.recommended_action}\n\nANALYST NOTE:\n${p.analyst_note}\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nDETECTION ENGINE:\nSource:    ${p.detection_source || 'n8n SOC Automation'}\nPipeline:  Schedule Trigger > File Ingest > Claude AI > Parser > Discord\nID:        ${workflowId}\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1344,
+        0
+      ],
+      "id": "bf32e438-d5c6-48ea-8a7d-d5c5593a18ed",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "***REMOVED***",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "content",
+              "value": "={{$json.content}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1952,
+        16
+      ],
+      "id": "5c6f71ec-be66-4921-900c-22971953ec70",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "a9cd5ead-6273-4171-9471-7b0a5898fcf3",
+              "leftValue": "={{$json.threat_level.toLowerCase()}}",
+              "rightValue": "medium",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "42d81b62-87be-4811-8467-1b431a4cafcb",
+              "leftValue": "={{$json.threat_level.toLowerCase()}}",
+              "rightValue": "critical",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1760,
+        0
+      ],
+      "id": "11cd1d97-7aaa-4e9a-981f-0f5be744a3e7",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "jsCode": "if (!global.attackMap) {\n  global.attackMap = {};\n}\n\nconst ip = $json.source_ip || \"unknown\";\n\n// initialize\nif (!global.attackMap[ip]) {\n  global.attackMap[ip] = 0;\n}\n\n// increment count\nglobal.attackMap[ip] += 1;\n\nconst attempts = global.attackMap[ip];\n\n// escalate severity\nlet threat = \"medium\";\n\nif (attempts >= 5) {\n  threat = \"critical\";\n} else if (attempts >= 3) {\n  threat = \"high\";\n}\n\n// rebuild alert content\nconst content = `🚨 SOC ALERT\n\nThreat: ${threat.toUpperCase()}\nAttempts: ${attempts}\nIP: ${ip}\n\nType: ${$json.attack_type}\n\nWhat:\n${$json.what_is_happening}\n\nAction:\n${$json.recommended_action}`;\n\nreturn [\n  {\n    json: {\n      ...$json,\n      threat_level: threat,\n      attempts,\n      content\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1552,
+        0
+      ],
+      "id": "fb3c9cbb-bc85-4919-8156-230795294d36",
+      "name": "Code in JavaScript2"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "claude-haiku-4-5-20251001",
+          "mode": "list",
+          "cachedResultName": "claude-haiku-4-5-20251001"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=You are a senior SOC analyst at a Tier 2 level.\nAnalyze this log:\n{{ $json.log_text }}\n\nReturn ONLY valid JSON, no markdown, no extra text:\n{\n  \"timestamp\": \"\",\n  \"threat_level\": \"\",\n  \"confidence\": \"\",\n  \"attack_type\": \"\",\n  \"mitre_tactic\": \"\",\n  \"mitre_technique\": \"\",\n  \"source_ip\": \"\",\n  \"destination_ip\": \"\",\n  \"protocol\": \"\",\n  \"affected_asset\": \"\",\n  \"kill_chain_phase\": \"\",\n  \"what_is_happening\": \"\",\n  \"recommended_action\": \"\",\n  \"escalate\": \"\",\n  \"false_positive_likelihood\": \"\",\n  \"analyst_note\": \"\"\n}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.anthropic",
+      "typeVersion": 1,
+      "position": [
+        992,
+        0
+      ],
+      "id": "3ca58984-487a-43ec-a77a-fb6580a103d9",
+      "name": "Message a model",
+      "credentials": {
+        "anthropicApi": {
+          "id": "YEFQYQ4s33nqRKMI",
+          "name": "Anthropic account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Read/Write Files from Disk",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read/Write Files from Disk": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript2": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "f77f2c55-1a38-4234-a46c-0a2e1206012c",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "8d79d90aeed09b109b000e724a6ef439eded9e36c86709967d2251084175b988"
+  },
+  "id": "eXxECBGsFnKfjhUk",
+  "tags": []
+}

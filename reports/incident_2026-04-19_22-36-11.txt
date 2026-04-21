@@ -1,0 +1,23 @@
+SOC INCIDENT RECORD
+Timestamp: 2026-04-19T22:36:11.071273
+
+Log:
+Failed password for invalid user test from 192.168.0.250 port 22 ssh2
+
+Generated Prompt:
+Use soc_orchestrator:
+
+Analyze this event:
+
+Failed password for invalid user test from 192.168.0.250 port 22 ssh2
+
+Context:
+- Source IP: 192.168.0.250
+- Destination IP: Unknown
+- Protocol: SSH
+- Repeated attempts: Unknown
+- Internal or external: Internal
+- Notes: Auto-detected log
+
+Return a full SOC incident report.
+
