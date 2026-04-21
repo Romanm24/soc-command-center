@@ -107,7 +107,7 @@ Exit SOC tool
 ![JSON Output](screenshots/Json-output.png)
 
 ### Agent System in VS Code
-![VS Code](screenshots/vscode_agents.png)
+![VS Code](screenshots/VSCODE_CLAUDECODE.png)
 
 ## Part of Delta Force SOC
 
