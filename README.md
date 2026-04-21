@@ -100,14 +100,14 @@ Exit SOC tool
 
 ## Screenshots
 
-### Agent System in VS Code
-![VS Code](screenshots/vscode_agents.png)
-
 ### GitHub Portfolio
-![GitHub](screenshots/github_repos.png)
+![GitHub](screenshots/GitHub_Repos.png)
 
 ### Structured JSON Output
-![JSON Output](screenshots/json_output.png)
+![JSON Output](screenshots/Json-output.png)
+
+### Agent System in VS Code
+![VS Code](screenshots/vscode_agents.png)
 
 ## Part of Delta Force SOC
 
