@@ -85,6 +85,7 @@ Exit SOC tool
 
 ## Project Status
 
+
 - [x] Multi-agent SOC system
 - [x] Automated log monitoring
 - [x] Escalation logic
@@ -96,6 +97,17 @@ Exit SOC tool
 - [ ] Campus deployment
 
 ---
+
+## Screenshots
+
+### Agent System in VS Code
+![VS Code](screenshots/vscode_agents.png)
+
+### GitHub Portfolio
+![GitHub](screenshots/github_repos.png)
+
+### Structured JSON Output
+![JSON Output](screenshots/json_output.png)
 
 ## Part of Delta Force SOC
 
