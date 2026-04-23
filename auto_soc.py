@@ -1,5 +1,4 @@
-print("SOC AUTOMATION STARTED")
-
+import logging
 import time
 import os
 import json
@@ -7,6 +6,14 @@ import urllib.request
 import urllib.error
 import subprocess
 from datetime import datetime
+from dotenv import load_dotenv
+
+load_dotenv()
+
+logging.basicConfig(
+    level=os.getenv("LOG_LEVEL", "INFO"),
+    format="%(asctime)s %(levelname)s %(message)s",
+)
 
 LOG_FILE = "incoming_logs.txt"
 PROMPT_FILE = "latest_incident_prompt.txt"
@@ -15,8 +22,7 @@ INVESTIGATED_FILE = "investigated_logs.txt"
 BLOCKLIST_FILE = "blocklist.txt"
 DISCORD_ALERT_FILE = "latest_discord_alert.txt"
 
-# Put your Discord webhook URL here if you want direct posting
-DISCORD_WEBHOOK_URL = https://discord.com/api/webhooks/1495659163580366943/fqiCmf-o3-dXIS6d8YDKjP-PkBgzFd4r0twgk9YkIbrUVttOzgfY6WdV908roSemClXS
+DISCORD_WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK_URL", "")
 
 
 def ensure_files():
@@ -108,39 +114,39 @@ Generated Prompt:
     with open(filename, "w", encoding="utf-8") as f:
         f.write(contents)
 
-    print(f"✔ Incident record saved: {filename}")
+    logging.info("Incident record saved: %s", filename)
 
 
 def mark_investigated(log: str):
     with open(INVESTIGATED_FILE, "a", encoding="utf-8") as f:
         f.write(log + "\n")
-    print("✔ Log marked as investigated.")
+    logging.info("Log marked as investigated.")
 
 
 def prepare_block_ip(log: str):
     source_ip = extract_source_ip(log)
 
     if source_ip == "Unknown":
-        print("Could not find a source IP to add to blocklist.")
+        logging.warning("Could not find a source IP to add to blocklist.")
         return
 
     with open(BLOCKLIST_FILE, "a", encoding="utf-8") as f:
         f.write(source_ip + "\n")
 
-    print(f"✔ Added to blocklist file: {source_ip}")
-    print("Review before enforcing on a firewall.")
+    logging.info("Added to blocklist file: %s", source_ip)
+    logging.info("Review before enforcing on a firewall.")
 
 
 def block_ip_windows_firewall(log: str):
     source_ip = extract_source_ip(log)
 
     if source_ip == "Unknown":
-        print("Could not find a source IP to block.")
+        logging.warning("Could not find a source IP to block.")
         return
 
     confirm = input(f"Block {source_ip} in Windows Firewall now? (yes/no): ").strip().lower()
     if confirm != "yes":
-        print("Firewall block cancelled.")
+        logging.info("Firewall block cancelled.")
         return
 
     rule_name = f"SOC_Block_{source_ip}"
@@ -154,14 +160,14 @@ def block_ip_windows_firewall(log: str):
 
     try:
         result = subprocess.run(cmd, capture_output=True, text=True, check=True)
-        print("✔ Firewall rule created successfully.")
-        print(result.stdout.strip())
+        logging.info("Firewall rule created successfully.")
+        logging.debug(result.stdout.strip())
     except subprocess.CalledProcessError as e:
-        print("Failed to create firewall rule.")
+        logging.error("Failed to create firewall rule.")
         if e.stdout:
-            print(e.stdout.strip())
+            logging.debug(e.stdout.strip())
         if e.stderr:
-            print(e.stderr.strip())
+            logging.error(e.stderr.strip())
 
 
 def build_discord_alert(log: str) -> str:
@@ -184,12 +190,12 @@ def prepare_discord_alert(log: str):
     with open(DISCORD_ALERT_FILE, "w", encoding="utf-8") as f:
         f.write(alert)
 
-    print(f"✔ Discord alert content saved to: {DISCORD_ALERT_FILE}")
+    logging.info("Discord alert content saved to: %s", DISCORD_ALERT_FILE)
 
 
 def send_discord_alert(log: str):
     if not DISCORD_WEBHOOK_URL.strip():
-        print("Discord webhook URL is empty. Add it in auto_soc.py first.")
+        logging.error("DISCORD_WEBHOOK_URL is not set. Add it to .env.")
         return
 
     alert = build_discord_alert(log)
@@ -206,11 +212,11 @@ def send_discord_alert(log: str):
 
     try:
         with urllib.request.urlopen(req) as response:
-            print(f"✔ Discord alert sent successfully. HTTP {response.status}")
+            logging.info("Discord alert sent. HTTP %s", response.status)
     except urllib.error.HTTPError as e:
-        print(f"Discord webhook failed. HTTP {e.code}")
+        logging.error("Discord webhook failed. HTTP %s", e.code)
     except urllib.error.URLError as e:
-        print(f"Discord webhook connection failed: {e.reason}")
+        logging.error("Discord webhook connection failed: %s", e.reason)
 
 
 def save_analyst_notes(log: str):
@@ -258,14 +264,14 @@ Final Disposition:
     with open(filename, "w", encoding="utf-8") as f:
         f.write(template)
 
-    print(f"✔ Analyst notes template saved: {filename}")
+    logging.info("Analyst notes template saved: %s", filename)
 
 
 def process_log(log: str):
     prompt = build_prompt(log)
 
-    print("\n=== SOC ANALYSIS REQUEST ===\n")
-    print(prompt)
+    logging.info("SOC ANALYSIS REQUEST")
+    logging.debug(prompt)
 
     save_latest_prompt(prompt)
     save_incident_report(log, prompt)
@@ -289,9 +295,9 @@ def soc_menu(log: str, prompt: str):
         choice = input("Select an option: ").strip()
 
         if choice == "1":
-            print("\nRebuilding analysis prompt...\n")
+            logging.info("Rebuilding analysis prompt.")
             save_latest_prompt(prompt)
-            print(prompt)
+            logging.debug(prompt)
 
         elif choice == "2":
             new_log = input("Enter new log: ").strip()
@@ -333,7 +339,7 @@ def soc_menu(log: str, prompt: str):
 def main():
     ensure_files()
 
-    print("Monitoring logs...")
+    logging.info("Monitoring logs...")
     seen = set()
 
     while True:

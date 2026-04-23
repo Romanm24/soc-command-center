@@ -64,7 +64,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "***REMOVED***",
+        "url": "https://discord.com/api/webhooks/1496190834507514030/vwkv6nNyhB9LjAcG2bpjkHTrMtFPYfsMk2XVe86xxkEM8H0vkJIbz9W2IQtbKekzIwOw",
         "sendBody": true,
         "bodyParameters": {
           "parameters": [
