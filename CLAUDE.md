@@ -4,7 +4,7 @@
 - **Project:** Delta Force SOC Command Center
 - **Company:** Delta Force Security LLC
 - **Owner:** Roman Mares — Cybersecurity Engineer & AI SOC Builder
-- **Email:** Roman.mares2012@gmail.com
+- **Email:** roman@deltaforcesecurity.io
 - **This Repo:** `soc-command-center` — agent orchestration, automation logic, escalation pipelines
 - **Main Platform Repo:** `deltaforce-soc-ai` — threat feed ingestion, D3.js dashboard, Claude classification pipeline
 
