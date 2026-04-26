@@ -64,7 +64,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://discord.com/api/webhooks/1496190834507514030/vwkv6nNyhB9LjAcG2bpjkHTrMtFPYfsMk2XVe86xxkEM8H0vkJIbz9W2IQtbKekzIwOw",
+        "url": "DISCORD_WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK_URL") ",
         "sendBody": true,
         "bodyParameters": {
           "parameters": [
